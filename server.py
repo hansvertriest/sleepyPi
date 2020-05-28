@@ -3,6 +3,17 @@ from flask import Flask
 import socket
 import fcntl
 import struct
+import firebase_admin
+from firebase_admin import credentials, firestore
+import threading
+
+# firebase
+cred = credentials.Certificate("./config.json")
+firebase_admin.initialize_app(cred)
+
+# connect firestore
+db = firestore.client()
+
 
 #  init flask
 app = Flask(__name__)
@@ -55,41 +66,62 @@ def stop_all_processes():
 	# add new lines to file
 	f.writelines(new_lines)
 
-# routes
 
+# set ip adress in db
+db.collection(u'configuratie').document(u'config').update({'ip': get_ip_address()})
+
+# ROUTES
+
+# test
 @app.route('/test')
 def test():
 	stop_all_processes()
 	update_state("print_1", "running")
-	return('Hey, there, sexy')
+	return('Hey, there, SleepyPi')
+
+# gotosleep
 
 @app.route('/gotosleep')
 def go_to_sleep():
 	stop_all_processes()
 	update_state("go_to_sleep", "running")
-	return('Hey, there, sexy')
+	return('Hey, there, SleepyPi')
 
 @app.route('/gotosleep/stop')
 def go_to_sleep_stop():
 	update_state("go_to_sleep", "off")
-	return('Hey, there, sexy')
+	return('Hey, there, SleepyPi')
+
+# sleeptracking
 
 @app.route('/sleeptracking')
 def sleep_tracking():
 	stop_all_processes()
 	update_state("sleep_tracking", "running")
-	return('Hey, there, sexy')
+	return('Hey, there, SleepyPi')
 
 @app.route('/sleeptracking/stop')
 def sleep_tracking_stop():
 	update_state("sleep_tracking", "off")
-	return('Hey, there, sexy')
-
+	return('Hey, there, SleepyPi')
 
 @app.route('/sleeptracking/pause')
 def sleep_tracking_pause():
 	update_state("sleep_tracking", "pause")
-	return('Hey, there, sexy')
+	return('Hey, there, SleepyPi')
+
+# alarm
+
+@app.route('/alarm')
+def alarm():
+	stop_all_processes()
+	update_state("alarm", "running")
+	return('Hey, there, SleepyPi')
+
+@app.route('/alarm/stop')
+def alarm_stop():
+	update_state("alarm", "off")
+	return('Hey, there, SleepyPi')
 
 # START SERVER
 # export FLASK_APP=server.py

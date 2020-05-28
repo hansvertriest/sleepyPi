@@ -18,7 +18,7 @@ sense = SenseHat()
 
 
 # variables
-TASKNAME = "sleep_tracking"
+TASKNAME = "alarm"
 TPF = 300 # time per frame in ms
 time_ms = int(round(time.time() * 1000))
 counter = 0
@@ -28,8 +28,8 @@ starting_value = upper_limit
 frame = 0
 status = 'off'
 pygame.mixer.music.set_volume(0.07)
-sound_name = "zen"
-duration_factor=60*1000
+sound_name = "morning"
+duration_factor=60*60*1000
 duration = 5 * duration_factor
 duration_counter = 0
 
@@ -92,7 +92,7 @@ def show_color():
 		counter = 0
 		direction = -1
 				
-	X = [255, g, 0]
+	X = [0, g, 255]
 
 	question_mark = [
 	X, X, X, X, X, X, X, X,
@@ -121,11 +121,11 @@ def on_snapshot(doc_snapshot, changes, read_time):
 	for doc in doc_snapshot:
 		doc_dict = doc.to_dict()
 		if not doc_dict["toSleepMusic"] == doc_dict:
-			if not sound_name == doc_dict["toSleepMusic"]:
-				sound_name = doc_dict["toSleepMusic"]
+			if not sound_name == doc_dict["alarmMusic"]:
+				sound_name = doc_dict["alarmMusic"]
 				status = "off"
-			duration = int(doc_dict['toSleepTimer'])  * duration_factor
-			pygame.mixer.music.set_volume(float(doc_dict['toSleepVolume']))
+			pygame.mixer.music.set_volume(float(doc_dict['alarmVolume']))
+			print(doc_dict['alarmVolume'])
 
 doc_ref = db.collection(u'configuratie').document(u'config')
 
@@ -142,7 +142,7 @@ while True:
 		frame += 1
 		time_ms = int(round(time.time() * 1000))
 		if duration_counter > duration: 
-			update_state('sleep_tracking', 'off')
+			update_state('alarm', 'off')
 			duration_counter = 0
 
 		state = get_state()

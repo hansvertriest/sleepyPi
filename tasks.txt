@@ -2,5 +2,5 @@ print_1	off
 go_to_sleep	off
 sleep_tracking	off
 screensaver	off
-alarm	off
+alarm	running
 good_morning	off
