@@ -16,17 +16,18 @@ db = firestore.client()
 pygame.mixer.init()
 sense = SenseHat()
 
+status = 'off'
 
-# variables
+# framerate
 TASKNAME = "sleep_tracking"
 TPF = 300 # time per frame in ms
 time_ms = int(round(time.time() * 1000))
 counter = 0
+
+# color animation
 direction = -1
 upper_limit = 120
 starting_value = upper_limit
-frame = 0
-status = 'off'
 pygame.mixer.music.set_volume(0.07)
 sound_name = "zen"
 duration_factor=60*1000

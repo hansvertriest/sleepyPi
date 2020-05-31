@@ -33,8 +33,8 @@ pygame.mixer.music.set_volume(0.07)
 sound_name = "morning"
 
 # timer
-duration_factor=60*60*1000 # convert to minutes
-duration = 0.5 * duration_factor
+duration_factor=60*1000 # convert to minutes
+duration = 1 * duration_factor
 duration_counter = 0
 
 
@@ -134,11 +134,9 @@ doc_watch = doc_ref.on_snapshot(on_snapshot)
 # loop
 
 while True:
-	time.sleep(0.0001)
 	time_delta = int(round(time.time() * 1000)) - time_ms
 	if time_delta > TPF:
 		counter += 1
-		print(counter)
 		time_ms = int(round(time.time() * 1000))
 		# timer
 		if duration_counter > duration: 
