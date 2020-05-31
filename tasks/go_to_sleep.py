@@ -11,6 +11,7 @@ frame = 0
 direction = -1
 upper_limit = 120
 starting_value = upper_limit
+status="off"
 
 def get_state() :
 	f= open("../tasks.txt","r")
@@ -70,9 +71,12 @@ while True:
 		time_ms = int(round(time.time() * 1000))
 
 		state = get_state()
-		if state == "running":
+		if state == "running" and status == "off":
 			# DO THE THING, JULIE
 			show_color()
-		# elif state == "off":
-		# 	sense.clear()
+			status = "running"
+		elif state == "off" and status == "running":
+			sense.clear()
+			status = "off"
+			print("Turning off")
 

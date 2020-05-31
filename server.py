@@ -18,6 +18,7 @@ db = firestore.client()
 #  init flask
 app = Flask(__name__)
 
+
 # get ip adress
 def get_ip_address():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -123,6 +124,8 @@ def alarm_stop():
 	update_state("alarm", "off")
 	return('Hey, there, SleepyPi')
 
+
+
 # START SERVER
 # export FLASK_APP=server.py
-# python3 -m flask run --host=0.0.0.0
+# python3 -m flask run --host=0.0.0.0 --cert=adhoc

@@ -1,4 +1,3 @@
-import pygame
 import time
 from sense_hat import SenseHat
 import firebase_admin
@@ -12,31 +11,31 @@ firebase_admin.initialize_app(cred)
 # connect firestore
 db = firestore.client()
 
-# inits
-pygame.mixer.init()
+
 sense = SenseHat()
 
-
-status = 'off'
-
-# framerate
-TASKNAME = "alarm"
+# variables
+TASKNAME = "morning_info"
 TPF = 300 # time per frame in ms
 time_ms = int(round(time.time() * 1000))
 counter = 0
-counter_limit = 5
-flash_counter = 0
-flash_limit = 2
+frame = 0
+status = 'off'
+duration_factor = 60*1000 #minutses
+duration = 0.5 * duration_factor # convert to minutes
+duration_counter = 0 
 
-# sound
-pygame.mixer.music.set_volume(0.07)
-sound_name = "morning"
+weather_frames_amount = {
+	"sunny" : 27,
+	"rain" : 10,
+	"snow" : 10,
+}
+weather="snow"
+weather_fps = 3
 
-# timer
-duration_factor=60*60*1000 # convert to minutes
-duration = 0.5 * duration_factor
-duration_counter = 0
-
+mode = "weather"
+text_done = True
+msg = ""
 
 # functions
 
@@ -76,97 +75,96 @@ def update_state(task_input, state_input):
 	# add new lines to file
 	f.writelines(new_lines)
 
-def show_color():
-	global counter
-	global counter_limit
-	global flash_counter
-	global flash_limit
+def show_weather():
+	global frame
+	global weather_frames_amount
+	global weather
+	global sense
 
-	sense.clear()
+	# reset frames when animation is over
+	if frame > weather_frames_amount[weather]:
+		frame = 0
 
-				
-	X = [0, 100, 255]
+	index = str(frame)
+	if not len(index) == 2:
+		index = '0' + index
+	sense.load_image("../animations/" + weather + "/sprite_"+ index +".png")
 
-	if counter >= counter_limit:
-		flash_counter += 1
-		X = [255, 255, 255]
-		if flash_counter >= flash_limit:
-			flash_counter = 0
-			counter = 0
 
-	question_mark = [
-	X, X, X, X, X, X, X, X,
-	X, X, X, X, X, X, X, X,
-	X, X, X, X, X, X, X, X,
-	X, X, X, X, X, X, X, X,
-	X, X, X, X, X, X, X, X,
-	X, X, X, X, X, X, X, X,
-	X, X, X, X, X, X, X, X,
-	X, X, X, X, X, X, X, X,
-	]
 
-	sense.set_pixels(question_mark)
-
-def start_music(filename):
-	pygame.mixer.music.load("../sounds/"+filename+".mp3")
-	sense.low_light = False
-	pygame.mixer.music.play()
 
 def on_snapshot(doc_snapshot, changes, read_time):
 	global status
 	global sound_name
 	global duration
 	global pygame
+	global msg
+	global mode
 
 	for doc in doc_snapshot:
 		doc_dict = doc.to_dict()
-		if not doc_dict["toSleepMusic"] == doc_dict:
-			if not sound_name == doc_dict["alarmMusic"]:
-				sound_name = doc_dict["alarmMusic"]
-				status = "off"
-			pygame.mixer.music.set_volume(float(doc_dict['alarmVolume']))
+		mode = doc_dict['wakeupAction']
+		if mode == "msg":
+			msg = doc_dict['msg']
+		# else:
+			# fetch weather
+
+			
 
 doc_ref = db.collection(u'configuratie').document(u'config')
 
 # Watch the document
 doc_watch = doc_ref.on_snapshot(on_snapshot)
 
-# loop
 
+# loop
+print(duration)
 while True:
+	# every loop is approx 0.0001 s
 	time.sleep(0.0001)
+
+	# calculate time since last update
 	time_delta = int(round(time.time() * 1000)) - time_ms
+
+	# if more time than tpf has passed => DO THE THING JULIE
 	if time_delta > TPF:
 		counter += 1
-		print(counter)
-		time_ms = int(round(time.time() * 1000))
+		frame += 1
+		time_ms = int(round(time.time() * 1000)) # reset time
+		
 		# timer
+		print(duration_counter)
 		if duration_counter > duration: 
-			update_state('alarm', 'off')
+			print('turning off')
+			update_state(TASKNAME, 'off')
 			duration_counter = 0
 
 		state = get_state()
 		# start
 		if state == "running" and status == "off":
 			duration_counter += TPF
-			start_music(sound_name)
-			show_color()
 			status = "playing"
+			if mode == 'weather':
+				show_weather()
+			elif mode == "msg" and text_done:
+				sense.show_message(msg)
 		# maintain
 		elif state == "running" and status == "playing":
 			duration_counter += TPF
-			show_color()
-		#  pause
-		elif state == "pause" and status == "playing":
-			pygame.mixer.music.pause()
-			sense.clear()
-			status = "paused"
-		#  unpause
-		elif state == "running" and status == "paused":
-			pygame.mixer.music.unpause()
-			status = "playing"
+			if mode == 'weather':
+				show_weather()
+			elif mode == "msg" and text_done:
+				sense.show_message(msg, 0.1, text_colour=[0, 0, 255], back_colour	=[255, 255, 255])
+		# #  pause
+		# elif state == "pause" and status == "playing":
+		# 	pygame.mixer.music.pause()
+		# 	sense.clear()
+		# 	status = "paused"
+		# #  unpause
+		# elif state == "running" and status == "paused":
+		# 	pygame.mixer.music.unpause()
+		# 	status = "playing"
 		# stop
 		elif state == "off" and status == "playing":
-			pygame.mixer.music.stop()
 			sense.clear()
 			status = "off"

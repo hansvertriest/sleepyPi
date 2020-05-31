@@ -4,3 +4,4 @@ sleep_tracking	off
 screensaver	off
 alarm	running
 good_morning	off
+morning_info	off
