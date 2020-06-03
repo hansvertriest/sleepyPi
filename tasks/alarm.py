@@ -16,11 +16,12 @@ db = firestore.client()
 pygame.mixer.init()
 sense = SenseHat()
 
+# VARIABLES
 
+TASKNAME = "alarm"
 status = 'off'
 
 # framerate
-TASKNAME = "alarm"
 TPF = 300 # time per frame in ms
 time_ms = int(round(time.time() * 1000))
 counter = 0
@@ -34,7 +35,7 @@ sound_name = "morning"
 
 # timer
 duration_factor=60*1000 # convert to minutes
-duration = 1 * duration_factor
+duration = 0.5 * duration_factor
 duration_counter = 0
 
 
@@ -83,7 +84,6 @@ def show_color():
 	global flash_limit
 
 	sense.clear()
-
 				
 	X = [0, 100, 255]
 
@@ -134,9 +134,15 @@ doc_watch = doc_ref.on_snapshot(on_snapshot)
 # loop
 
 while True:
+	# get difference in time
 	time_delta = int(round(time.time() * 1000)) - time_ms
+
+	# if difference in time is bigger as the time for one frame
 	if time_delta > TPF:
+		# increment frame counter
 		counter += 1
+
+		# reset time_ms
 		time_ms = int(round(time.time() * 1000))
 		# timer
 		if duration_counter > duration: 
@@ -150,20 +156,6 @@ while True:
 			start_music(sound_name)
 			show_color()
 			status = "playing"
-		# maintain
-		elif state == "running" and status == "playing":
-			duration_counter += TPF
-			show_color()
-		#  pause
-		elif state == "pause" and status == "playing":
-			pygame.mixer.music.pause()
-			sense.clear()
-			status = "paused"
-		#  unpause
-		elif state == "running" and status == "paused":
-			pygame.mixer.music.unpause()
-			status = "playing"
-		# stop
 		elif state == "off" and status == "playing":
 			pygame.mixer.music.stop()
 			sense.clear()

@@ -3,7 +3,11 @@ import time
 
 sense = SenseHat()
 
+# VARIABLES
+
 TASKNAME = "go_to_sleep"
+
+# framerate
 TPF = 50 # time per frame in ms
 time_ms = int(round(time.time() * 1000))
 counter = 0
@@ -35,20 +39,8 @@ def show_color():
 	global upper_limit
 
 	sense.clear()
-
-	g = starting_value + ((frame*3)%upper_limit) * direction
-	if g <= 0 :
-		g = 0
-		starting_value = 0
-		counter = 0
-		direction = 1
-	if g >= upper_limit:
-		g = upper_limit
-		starting_value = upper_limit
-		counter = 0
-		direction = -1
 				
-	X = [255, g, 0]
+	X = [255, 0, 0]
 
 	question_mark = [
 	X, X, X, X, X, X, X, X,
@@ -65,14 +57,20 @@ def show_color():
 
 		
 while True:
+	# get difference in time
 	time_delta = int(round(time.time() * 1000)) - time_ms
+
+	# if difference in time is bigger as the time for one frame
 	if time_delta > TPF:
+		# increment frame counter
 		counter += 1
+
+		# reset time_ms
 		time_ms = int(round(time.time() * 1000))
 
 		state = get_state()
 		if state == "running" and status == "off":
-			# DO THE THING, JULIE
+			sense.low_light = True
 			show_color()
 			status = "running"
 		elif state == "off" and status == "running":

@@ -16,10 +16,12 @@ db = firestore.client()
 pygame.mixer.init()
 sense = SenseHat()
 
+# VARIABLES
+
+TASKNAME = "sleep_tracking"
 status = 'off'
 
 # framerate
-TASKNAME = "sleep_tracking"
 TPF = 300 # time per frame in ms
 time_ms = int(round(time.time() * 1000))
 counter = 0
@@ -28,11 +30,18 @@ counter = 0
 direction = -1
 upper_limit = 120
 starting_value = upper_limit
+
+# sound 
 pygame.mixer.music.set_volume(0.07)
 sound_name = "zen"
+
+# timer
 duration_factor=60*1000
-duration = 5 * duration_factor
+duration = 0.5 * duration_factor
 duration_counter = 0
+
+# dispaly
+mode = "colors"
 
 # functions
 
@@ -75,13 +84,16 @@ def update_state(task_input, state_input):
 def show_color():
 	global starting_value
 	global counter
-	global frame
 	global direction
 	global upper_limit
 
+	# clear screen
 	sense.clear()
 
+	# determine green value
 	g = starting_value + (counter*3) * direction
+
+	# guard limits of green
 	if g <= 0 :
 		g = 0
 		starting_value = 0
@@ -92,8 +104,27 @@ def show_color():
 		starting_value = upper_limit
 		counter = 0
 		direction = -1
-				
+
+	# set pixels
+ 
 	X = [255, g, 0]
+
+	question_mark = [
+	X, X, X, X, X, X, X, X,
+	X, X, X, X, X, X, X, X,
+	X, X, X, X, X, X, X, X,
+	X, X, X, X, X, X, X, X,
+	X, X, X, X, X, X, X, X,
+	X, X, X, X, X, X, X, X,
+	X, X, X, X, X, X, X, X,
+	X, X, X, X, X, X, X, X,
+	]
+
+	sense.set_pixels(question_mark)
+
+def show_red_light():
+	# set pixels
+	X = [255, 0, 0]
 
 	question_mark = [
 	X, X, X, X, X, X, X, X,
@@ -110,7 +141,6 @@ def show_color():
 
 def start_music(filename):
 	pygame.mixer.music.load("../sounds/"+filename+".mp3")
-	sense.low_light = True
 	pygame.mixer.music.play()
 
 def on_snapshot(doc_snapshot, changes, read_time):
@@ -118,15 +148,21 @@ def on_snapshot(doc_snapshot, changes, read_time):
 	global sound_name
 	global duration
 	global pygame
+	global mode
 
 	for doc in doc_snapshot:
 		doc_dict = doc.to_dict()
-		if not doc_dict["toSleepMusic"] == doc_dict:
-			if not sound_name == doc_dict["toSleepMusic"]:
-				sound_name = doc_dict["toSleepMusic"]
-				status = "off"
-			duration = int(doc_dict['toSleepTimer'])  * duration_factor
-			pygame.mixer.music.set_volume(float(doc_dict['toSleepVolume']))
+		# als toSleepMusic has changed 
+		if not sound_name == doc_dict["toSleepMusic"]:
+			sound_name = doc_dict["toSleepMusic"]
+			status = "off"
+		# set timer
+		duration = int(doc_dict['toSleepTimer'])  * duration_factor
+		# set musicVolume
+		pygame.mixer.music.set_volume(float(doc_dict['toSleepVolume']))
+		# set displaymode
+		mode = doc_dict['toSleepDisplay']
+		print(mode)
 
 doc_ref = db.collection(u'configuratie').document(u'config')
 
@@ -136,12 +172,18 @@ doc_watch = doc_ref.on_snapshot(on_snapshot)
 # loop
 
 while True:
-	time.sleep(0.0001)
+	# get difference in time
 	time_delta = int(round(time.time() * 1000)) - time_ms
+
+	# if difference in time is bigger as the time for one frame
 	if time_delta > TPF:
+		# increment frame counter
 		counter += 1
-		frame += 1
+
+		# reset time_ms
 		time_ms = int(round(time.time() * 1000))
+
+		# timer
 		if duration_counter > duration: 
 			update_state('sleep_tracking', 'off')
 			duration_counter = 0
@@ -149,14 +191,21 @@ while True:
 		state = get_state()
 		# start
 		if state == "running" and status == "off":
+			sense.low_light = True
 			duration_counter += TPF
 			start_music(sound_name)
-			show_color()
+			if mode == "colors":
+				show_color()
+			else:
+				show_red_light()
 			status = "playing"
 		# maintain
 		elif state == "running" and status == "playing":
 			duration_counter += TPF
-			show_color()
+			if mode == "colors":
+				show_color()
+			else:
+				show_red_light()
 		#  pause
 		elif state == "pause" and status == "playing":
 			pygame.mixer.music.pause()

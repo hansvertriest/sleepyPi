@@ -11,28 +11,34 @@ firebase_admin.initialize_app(cred)
 # connect firestore
 db = firestore.client()
 
-
 sense = SenseHat()
 
-# variables
+# VARIABLES
+
 TASKNAME = "morning_info"
+status = 'off'
+
+# framerate
 TPF = 300 # time per frame in ms
 time_ms = int(round(time.time() * 1000))
 counter = 0
-frame = 0
-status = 'off'
+
+# timer
 duration_factor = 60*1000 #minutses
 duration = 0.5 * duration_factor # convert to minutes
 duration_counter = 0 
 
+# animation
+frame = 0
+weather_fps = 3
 weather_frames_amount = {
 	"sunny" : 27,
 	"rain" : 10,
 	"snow" : 10,
 }
-weather="snow"
-weather_fps = 3
 
+# modes
+weather="snow"
 mode = "weather"
 text_done = True
 msg = ""
@@ -118,22 +124,20 @@ doc_watch = doc_ref.on_snapshot(on_snapshot)
 
 
 # loop
-print(duration)
 while True:
-	# every loop is approx 0.0001 s
-	time.sleep(0.0001)
-
-	# calculate time since last update
+	# get difference in time
 	time_delta = int(round(time.time() * 1000)) - time_ms
 
-	# if more time than tpf has passed => DO THE THING JULIE
+	# if difference in time is bigger as the time for one frame
 	if time_delta > TPF:
+		# increment frame counter
 		counter += 1
 		frame += 1
+		
+		# reset time_ms
 		time_ms = int(round(time.time() * 1000)) # reset time
 		
 		# timer
-		print(duration_counter)
 		if duration_counter > duration: 
 			print('turning off')
 			update_state(TASKNAME, 'off')
@@ -155,16 +159,6 @@ while True:
 				show_weather()
 			elif mode == "msg" and text_done:
 				sense.show_message(msg, 0.1, text_colour=[0, 0, 255], back_colour	=[255, 255, 255])
-		# #  pause
-		# elif state == "pause" and status == "playing":
-		# 	pygame.mixer.music.pause()
-		# 	sense.clear()
-		# 	status = "paused"
-		# #  unpause
-		# elif state == "running" and status == "paused":
-		# 	pygame.mixer.music.unpause()
-		# 	status = "playing"
-		# stop
 		elif state == "off" and status == "playing":
 			sense.clear()
 			status = "off"
