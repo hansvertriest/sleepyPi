@@ -2,7 +2,7 @@ import time
 from sense_hat import SenseHat
 import firebase_admin
 from firebase_admin import credentials, firestore
-import threading
+import requests
 
 # firebase
 cred = credentials.Certificate("../config.json")
@@ -25,7 +25,7 @@ counter = 0
 
 # timer
 duration_factor = 60*1000 #minutses
-duration = 0.5 * duration_factor # convert to minutes
+duration = 30 * duration_factor # convert to minutes
 duration_counter = 0 
 
 # animation
@@ -38,10 +38,19 @@ weather_frames_amount = {
 }
 
 # modes
-weather="snow"
+weather="sunny"
 mode = "weather"
 text_done = True
 msg = ""
+
+# weather
+temp = "0"
+weather_animation = {
+	"rain" : ["2", "3", "5"],
+	"snow" : ["6"],
+	"sunny" : ["8"]
+	# clouds : ["8"]
+}
 
 # functions
 
@@ -81,6 +90,21 @@ def update_state(task_input, state_input):
 	# add new lines to file
 	f.writelines(new_lines)
 
+
+def fetch_weather():
+	global weather
+
+	r = requests.get('https://api.openweathermap.org/data/2.5/onecall?lat=51.0543422&lon=3.7174243&exclude=hourly,current&appid=7237ba6945b9f7f2f3999e559b205768')
+	id = r.json()['daily'][0]['weather'][0]['id'];
+	# id = 6
+	# assign correct weather
+	if str(id)[0] in  weather_animation["rain"]:
+		weather = "rain"
+	elif str(id)[0] in  weather_animation["sunny"]:
+		weather = "sunny"
+	elif str(id)[0] in  weather_animation["snow"]:
+		weather = "snow"
+
 def show_weather():
 	global frame
 	global weather_frames_amount
@@ -112,8 +136,9 @@ def on_snapshot(doc_snapshot, changes, read_time):
 		mode = doc_dict['wakeupAction']
 		if mode == "msg":
 			msg = doc_dict['msg']
-		# else:
-			# fetch weather
+		else:
+			# fetch weather 
+			fetch_weather()
 
 			
 
@@ -121,7 +146,6 @@ doc_ref = db.collection(u'configuratie').document(u'config')
 
 # Watch the document
 doc_watch = doc_ref.on_snapshot(on_snapshot)
-
 
 # loop
 while True:
