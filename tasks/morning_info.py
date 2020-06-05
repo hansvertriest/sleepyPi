@@ -175,7 +175,7 @@ while True:
 			if mode == 'weather':
 				show_weather()
 			elif mode == "msg" and text_done:
-				sense.show_message(msg)
+				sense.show_message(msg, 0.1, text_colour=[0, 0, 255], back_colour	=[255, 255, 255])
 		# maintain
 		elif state == "running" and status == "playing":
 			duration_counter += TPF

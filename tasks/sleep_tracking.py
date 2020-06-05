@@ -162,7 +162,6 @@ def on_snapshot(doc_snapshot, changes, read_time):
 		pygame.mixer.music.set_volume(float(doc_dict['toSleepVolume']))
 		# set displaymode
 		mode = doc_dict['toSleepDisplay']
-		print(mode)
 
 doc_ref = db.collection(u'configuratie').document(u'config')
 
